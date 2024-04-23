@@ -82,11 +82,7 @@ ppgan.apps.RealSRPredictor(output='output', weight_path=None)
 3. 可以处理低分辨率图像中的模糊噪声问题，得到更加清晰干净的高分辨结果。
 
 算法的主要步骤可以分为两个模块：退化模型的估计，超分模型的训练。方法框架如下图所示
-————————————————
 
-                            版权声明：本文为博主原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
-                        
-原文链接：https://blog.csdn.net/LU__JH/article/details/117432763![image](https://github.com/aimerfeng/PaddleGAN-BasicVSR--/assets/59301770/1bf02f86-5cbb-44f9-887c-6594962500db)
 
 #### 参数
 
