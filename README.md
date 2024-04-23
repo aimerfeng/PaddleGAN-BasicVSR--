@@ -71,19 +71,23 @@ ppgan.apps.RealSRPredictor(output='output', weight_path=None)
 - `output_path (str，可选的)`: 输出的文件夹路径，默认值：`output`.
 - `weight_path (None，可选的)`: 载入的权重路径，如果没有设置，则从云端下载默认的权重到本地。默认值：`None`。
 
-### 视频超分辨率模型PPMSVSR
-百度自研的PP-MSVSR是一种多阶段视频超分深度架构，具有局部融合模块、辅助损失和细化对齐模块，以逐步细化增强结果。具体来说，在第一阶段设计了局部融合模块，在特征传播之前进行局部特征融合, 以加强特征传播中跨帧特征的融合。在第二阶段中引入了一个辅助损失，使传播模块获得的特征保留了更多与HR空间相关的信息。在第三阶段中引入了一个细化的对齐模块，以充分利用前一阶段传播模块的特征信息。大量实验证实，PP-MSVSR在Vid4数据集性能优异，仅使用 1.45M 参数PSNR指标即可达到28.13dB。
+### Real-SR是腾讯优图实验室提出一种新的图像超分辨率算法。该算法在CVPR-NTIRE-2020真实图像超分比赛中以明显优势获得双赛道冠军。
 
-PP-MSVSR提供两种体积模型，开发者可根据实际场景灵活选择：PP-MSVSR（参数量1.45M）与PP-MSVSR-L（参数量7.42）。
+与已有的超分辨率方法相比，RealSR的创新主要体现在三个方面：
 
-![](./imgs/ppmsvsr_network.png)
+1. RealSR采用了自主设计的新型图片退化方法，通过分析真实图片中的模糊和噪声，模拟真实图片的退化过程
 
-```
-ppgan.apps.PPMSVSRPredictor(output='output', weight_path=None, num_frames)
-```
-```
-ppgan.apps.PPMSVSRLargePredictor(output='output', weight_path=None, num_frames)
-```
+2. 不需要成对的训练数据，利用无标记的数据即可进行训练。
+
+3. 可以处理低分辨率图像中的模糊噪声问题，得到更加清晰干净的高分辨结果。
+
+算法的主要步骤可以分为两个模块：退化模型的估计，超分模型的训练。方法框架如下图所示
+————————————————
+
+                            版权声明：本文为博主原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
+                        
+原文链接：https://blog.csdn.net/LU__JH/article/details/117432763![image](https://github.com/aimerfeng/PaddleGAN-BasicVSR--/assets/59301770/1bf02f86-5cbb-44f9-887c-6594962500db)
+
 #### 参数
 
 - `output_path (str，可选的)`: 输出的文件夹路径，默认值：`output`.
