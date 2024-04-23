@@ -1,0 +1,158 @@
+trainer:
+  target: trainer.TrainerDifIRLPIPS
+
+autoencoder:
+  target: ldm.models.autoencoder.VQModelTorch
+  ckpt_path: weights/autoencoder_vq_f4.pth
+  use_fp16: True
+  params:
+    embed_dim: 3
+    n_embed: 8192
+    ddconfig:
+      double_z: False
+      z_channels: 3
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 2
+      - 4
+      num_res_blocks: 2
+      attn_resolutions: []
+      dropout: 0.0
+      padding_mode: zeros
+
+model:
+  target: models.unet.UNetModelSwin
+  ckpt_path: ~
+  params:
+    image_size: 64
+    in_channels: 3
+    model_channels: 160
+    out_channels: ${autoencoder.params.embed_dim}
+    attention_resolutions: [64,32,16,8]
+    dropout: 0
+    channel_mult: [1, 2, 2, 4]
+    num_res_blocks: [2, 2, 2, 2]
+    conv_resample: True
+    dims: 2
+    use_fp16: False
+    num_head_channels: 32
+    use_scale_shift_norm: True
+    resblock_updown: False
+    swin_depth: 2
+    swin_embed_dim: 192
+    window_size: 8
+    mlp_ratio: 4
+    cond_lq: True
+    cond_mask: True
+    lq_size: 256
+
+diffusion:
+  target: models.script_util.create_gaussian_diffusion
+  params:
+    sf: 1
+    schedule_name: exponential
+    schedule_kwargs:
+      power: 0.3
+    etas_end: 0.99
+    steps: 4
+    min_noise_level: 0.2
+    kappa: 2.0
+    weighted_mse: False
+    predict_type: xstart
+    timestep_respacing: ~
+    scale_factor: 1.0
+    normalize_input: True
+    latent_flag: True
+
+data:
+  train:
+    type: inpainting
+    params:
+      dir_path: ~
+      txt_file_path: /mnt/sfs-common/zsyue/database/ImageNet/files_txt/path_train_all.txt
+      transform_type: lama_distortions
+      transform_kwargs:
+        pch_size: 256
+        mean: 0.5
+        std: 0.5
+        max_value: 255.0
+      need_path: False
+      im_exts: png
+      recursive: False
+      mask_kwargs:
+        irregular_proba: 1
+        irregular_kwargs:
+          max_angle: 4
+          max_len: 200
+          max_width: 100
+          max_times: 5
+          min_times: 1
+
+        box_proba: 1
+        box_kwargs:
+          margin: 10
+          bbox_min_size: 30
+          bbox_max_size: 150
+          max_times: 4
+          min_times: 1
+
+        outpainting_proba: 1
+        outpainting_kwargs:
+          min_padding_percent: 0.04
+          max_padding_percent: 0.25
+          left_padding_prob: 0.5
+          top_padding_prob: 0.5
+          right_padding_prob: 0.5
+          bottom_padding_prob: 0.5
+  val:
+    type: inpainting_val
+    params:
+      lq_path: testdata/inpainting/imagenet/lq
+      gt_path: testdata/inpainting/imagenet/gt
+      mask_path: testdata/inpainting/imagenet/mask
+      transform_type: default
+      transform_kwargs:
+          mean: 0.5
+          std: 0.5
+      im_exts: JPEG
+      recursive: False
+
+train:
+  # learning rate
+  lr: 5e-5                      # learning rate 
+  lr_min: 2e-5
+  lr_schedule: cosin
+  warmup_iterations: 5000
+  # dataloader
+  batch: [96, 1]                
+  microbatch: 12
+  num_workers: 4
+  prefetch_factor: 2            
+  # optimization settings
+  weight_decay: 0               
+  ema_rate: 0.999
+  iterations: 400000            # total iterations
+  # save logging
+  save_freq: 10000
+  log_freq: [200, 2000, 1]         # [training loss, training images, val images]
+  loss_coef: [1.0, 10.0]         # [mse, lpips]
+  local_logging: True           # manually save images
+  tf_logging: False             # tensorboard logging
+  # validation settings
+  use_ema_val: True            
+  val_freq: ${train.save_freq}
+  val_y_channel: True
+  val_resolution: 256
+  val_padding_mode: reflect
+  # training setting
+  use_amp: True               # amp training
+  seed: 123456                  # random seed
+  global_seeding: False
+  # compile setting
+  compile:
+    flag: False
+    mode: reduce-overhead
